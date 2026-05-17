@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>StockLocal — Inventario de Tienda</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="inventario.css"/>
+</head>
+<body>
+
+  <div class="noise" aria-hidden="true"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <span class="brand-name">StockLocal</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="showSection('dashboard')">
+        <span class="nav-icon">▦</span> Dashboard
+      </button>
+      <button class="nav-item" onclick="showSection('productos')">
+        <span class="nav-icon">◈</span> Productos
+      </button>
+      <button class="nav-item" onclick="showSection('agregar')">
+        <span class="nav-icon">⊕</span> Agregar producto
+      </button>
+      <button class="nav-item" onclick="showSection('alertas')">
+        <span class="nav-icon">◎</span> Alertas stock
+        <span class="badge" id="badge-alertas">0</span>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <span>Tienda local · 2025</span>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <!-- DASHBOARD -->
+    <section class="section" id="section-dashboard">
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <p class="page-sub">Resumen general de tu inventario</p>
+      </div>
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <span class="kpi-icon" style="background:#e8f4ff;color:#2563eb">◈</span>
+          <div>
+            <div class="kpi-value" id="kpi-total">0</div>
+            <div class="kpi-label">Productos</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-icon" style="background:#f0fdf4;color:#16a34a">$</span>
+          <div>
+            <div class="kpi-value" id="kpi-valor">$0</div>
+            <div class="kpi-label">Valor total</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-icon" style="background:#fef9ec;color:#d97706">◎</span>
+          <div>
+            <div class="kpi-value" id="kpi-bajo">0</div>
+            <div class="kpi-label">Stock bajo</div>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-icon" style="background:#fef2f2;color:#dc2626">!</span>
+          <div>
+            <div class="kpi-value" id="kpi-agotado">0</div>
+            <div class="kpi-label">Agotados</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-title">Productos recientes</div>
+      <div class="table-wrap">
+        <table class="inv-table" id="table-recientes">
+          <thead>
+            <tr><th>Producto</th><th>Categoría</th><th>Stock</th><th>Precio</th><th>Estado</th></tr>
+          </thead>
+          <tbody id="tbody-recientes"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PRODUCTOS -->
+    <section class="section hidden" id="section-productos">
+      <div class="page-header">
+        <h1>Productos</h1>
+        <p class="page-sub">Gestiona todo tu inventario</p>
+      </div>
+      <div class="toolbar">
+        <input type="text" class="search-input" id="search-input" placeholder="Buscar producto..." oninput="renderProductos()"/>
+        <select class="filter-select" id="filter-categoria" onchange="renderProductos()">
+          <option value="">Todas las categorías</option>
+        </select>
+        <select class="filter-select" id="filter-estado" onchange="renderProductos()">
+          <option value="">Todos los estados</option>
+          <option value="normal">Normal</option>
+          <option value="bajo">Stock bajo</option>
+          <option value="agotado">Agotado</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table class="inv-table">
+          <thead>
+            <tr><th>Producto</th><th>Categoría</th><th>Stock</th><th>Precio unit.</th><th>Valor total</th><th>Estado</th><th>Acciones</th></tr>
+          </thead>
+          <tbody id="tbody-productos"></tbody>
+        </table>
+      </div>
+      <div class="empty-products hidden" id="empty-products">
+        <span style="font-size:2rem;opacity:.3">◈</span>
+        <p>No se encontraron productos</p>
+      </div>
+    </section>
+
+    <!-- AGREGAR / EDITAR -->
+    <section class="section hidden" id="section-agregar">
+      <div class="page-header">
+        <h1 id="form-title">Agregar producto</h1>
+        <p class="page-sub">Completa los datos del producto</p>
+      </div>
+      <div class="form-card">
+        <input type="hidden" id="edit-id"/>
+        <div class="form-grid">
+          <div class="form-group full">
+            <label>Nombre del producto *</label>
+            <input type="text" id="f-nombre" placeholder="Ej: Arroz Diana 500g" maxlength="80"/>
+          </div>
+          <div class="form-group">
+            <label>Categoría *</label>
+            <input type="text" id="f-categoria" placeholder="Ej: Alimentos, Bebidas..." list="cat-list"/>
+            <datalist id="cat-list"></datalist>
+          </div>
+          <div class="form-group">
+            <label>Precio unitario ($) *</label>
+            <input type="number" id="f-precio" placeholder="0" min="0" step="0.01"/>
+          </div>
+          <div class="form-group">
+            <label>Stock actual *</label>
+            <input type="number" id="f-stock" placeholder="0" min="0"/>
+          </div>
+          <div class="form-group">
+            <label>Stock mínimo (alerta)</label>
+            <input type="number" id="f-minimo" placeholder="5" min="0"/>
+          </div>
+          <div class="form-group full">
+            <label>Descripción (opcional)</label>
+            <textarea id="f-descripcion" placeholder="Notas adicionales sobre el producto..." rows="3"></textarea>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-secondary" onclick="cancelarEdicion()">Cancelar</button>
+          <button class="btn-primary" onclick="guardarProducto()">Guardar producto</button>
+        </div>
+        <p class="form-error hidden" id="form-error">Por favor completa todos los campos obligatorios.</p>
+      </div>
+    </section>
+
+    <!-- ALERTAS -->
+    <section class="section hidden" id="section-alertas">
+      <div class="page-header">
+        <h1>Alertas de stock</h1>
+        <p class="page-sub">Productos que necesitan reabastecimiento</p>
+      </div>
+      <div id="alertas-list"></div>
+    </section>
+
+  </main>
+
+  <!-- MODAL EDITAR STOCK -->
+  <div class="modal-overlay hidden" id="modal-overlay" onclick="cerrarModal()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <strong id="modal-nombre">Producto</strong>
+        <button class="modal-close" onclick="cerrarModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <label>Ajustar stock</label>
+        <div class="stock-controls">
+          <button class="stock-btn minus" onclick="ajustarStock(-1)">−</button>
+          <input type="number" id="modal-stock" min="0"/>
+          <button class="stock-btn plus" onclick="ajustarStock(1)">+</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="cerrarModal()">Cancelar</button>
+        <button class="btn-primary" onclick="guardarStock()">Guardar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="inventario.js"></script>
+</body>
+</html>
